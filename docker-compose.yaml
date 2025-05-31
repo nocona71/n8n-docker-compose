@@ -1,0 +1,47 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    container_name: n8n-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ${DOCKER_DATA_PATH}/n8n/db:/var/lib/postgresql/data
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"   # Internal only; not exposed externally, just to DSM reverse proxy
+    environment:
+      # --- Core n8n Config ---
+      - N8N_PROTOCOL=http
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PORT=5678
+      - N8N_TRUST_PROXY=true
+      # --- External URLs (must match your public-facing port) ---
+      - WEBHOOK_URL=https://${N8N_HOST}:${N8N_EXTERNAL_PORT}
+      - VUE_APP_URL_BASE_API=https://${N8N_HOST}:${N8N_EXTERNAL_PORT}
+      # --- Database Config ---
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      # --- Timezone, Auth, and Misc ---
+      - GENERIC_TIMEZONE=${TIMEZONE}
+      - TZ=${TIMEZONE}
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_AUTH_PASSWORD}
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+    depends_on:
+      - db
+    volumes:
+      - ${DOCKER_DATA_PATH}/n8n/data:/home/node/.n8n
+      - ${DOCKER_DATA_PATH}/n8n/files:/files
