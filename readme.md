@@ -1,4 +1,4 @@
-# N8N Deployment Guide for Synology NAS with Portainer
+# N8N Deployment Guide for your NAS with Portainer
 
 Deploy N8N (workflow automation) on Synology NAS using Portainer and Docker Compose with reverse proxy configuration.
 
